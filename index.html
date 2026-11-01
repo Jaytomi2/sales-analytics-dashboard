@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales Analytics Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <svg class="topbar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 4-6"/>
+      </svg>
+      <h1 class="topbar-title">Sales Analytics</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="date-filter">
+        <label for="startDate">From</label>
+        <input type="date" id="startDate">
+        <label for="endDate">To</label>
+        <input type="date" id="endDate">
+        <button class="btn btn-outline" id="btnApplyDate">Apply</button>
+        <button class="btn btn-ghost" id="btnResetDate">Reset</button>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" id="btnAddSale">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Sale
+        </button>
+        <div class="dropdown">
+          <button class="btn btn-outline" id="btnMore">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <button class="dropdown-item" id="btnGenerateSample">Generate Sample Data</button>
+            <button class="dropdown-item" id="btnExport">Export Data (JSON)</button>
+            <button class="dropdown-item" id="btnImport">Import Data (JSON)</button>
+            <hr>
+            <button class="dropdown-item danger" id="btnClearAll">Clear All Data</button>
+          </div>
+        </div>
+        <input type="file" id="fileImport" accept=".json" hidden>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main">
+
+    <!-- KPI Cards Row -->
+    <section class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Total Revenue</span>
+          <div class="kpi-icon revenue-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value" id="kpiRevenue">$0.00</div>
+        <div class="kpi-trend" id="kpiRevenueTrend"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Total Orders</span>
+          <div class="kpi-icon orders-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value" id="kpiOrders">0</div>
+        <div class="kpi-trend" id="kpiOrdersTrend"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Avg Order Value</span>
+          <div class="kpi-icon aov-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value" id="kpiAOV">$0.00</div>
+        <div class="kpi-trend" id="kpiAOVTrend"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">Refund Rate</span>
+          <div class="kpi-icon refund-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-11.36L1 10"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value" id="kpiRefundRate">0%</div>
+        <div class="kpi-trend" id="kpiRefundTrend"></div>
+      </div>
+    </section>
+
+    <!-- Charts Row 1 -->
+    <section class="charts-row">
+      <div class="chart-card wide">
+        <div class="chart-header">
+          <h2 class="chart-title">Revenue Over Time</h2>
+          <div class="chart-actions">
+            <button class="chip active" data-granularity="daily">Daily</button>
+            <button class="chip" data-granularity="weekly">Weekly</button>
+            <button class="chip" data-granularity="monthly">Monthly</button>
+          </div>
+        </div>
+        <div class="chart-body">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card narrow">
+        <div class="chart-header">
+          <h2 class="chart-title">Sales by Category</h2>
+        </div>
+        <div class="chart-body doughnut-container">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts Row 2 -->
+    <section class="charts-row">
+      <div class="chart-card narrow">
+        <div class="chart-header">
+          <h2 class="chart-title">Order Status</h2>
+        </div>
+        <div class="chart-body doughnut-container">
+          <canvas id="statusChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card wide">
+        <div class="chart-header">
+          <h2 class="chart-title">Top Products</h2>
+        </div>
+        <div class="chart-body">
+          <canvas id="productsChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Transactions Table -->
+    <section class="table-section">
+      <div class="table-header">
+        <h2 class="table-title">Recent Transactions</h2>
+        <div class="table-controls">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="searchInput" placeholder="Search transactions...">
+          </div>
+          <select id="statusFilter" class="select-filter">
+            <option value="all">All Status</option>
+            <option value="completed">Completed</option>
+            <option value="pending">Pending</option>
+            <option value="refunded">Refunded</option>
+          </select>
+          <select id="categoryFilter" class="select-filter">
+            <option value="all">All Categories</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="sortable" data-sort="date">Date <span class="sort-arrow"></span></th>
+              <th class="sortable" data-sort="customer">Customer <span class="sort-arrow"></span></th>
+              <th class="sortable" data-sort="product">Product <span class="sort-arrow"></span></th>
+              <th>Category</th>
+              <th class="sortable" data-sort="quantity">Qty <span class="sort-arrow"></span></th>
+              <th class="sortable" data-sort="unitPrice">Unit Price <span class="sort-arrow"></span></th>
+              <th class="sortable" data-sort="total">Total <span class="sort-arrow"></span></th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="table-footer">
+        <span class="table-info" id="tableInfo">Showing 0 of 0 entries</span>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Add/Edit Sale Modal -->
+  <div class="modal-overlay" id="saleModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Add New Sale</h2>
+        <button class="modal-close" id="btnCloseModal">&times;</button>
+      </div>
+      <form id="saleForm" class="modal-body">
+        <input type="hidden" id="saleId">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="saleDate">Date</label>
+            <input type="date" id="saleDate" required>
+          </div>
+          <div class="form-group">
+            <label for="saleCustomer">Customer</label>
+            <input type="text" id="saleCustomer" placeholder="Customer name" required>
+          </div>
+          <div class="form-group">
+            <label for="saleProduct">Product</label>
+            <input type="text" id="saleProduct" placeholder="Product name" required>
+          </div>
+          <div class="form-group">
+            <label for="saleCategory">Category</label>
+            <select id="saleCategory" required>
+              <option value="">Select category</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Clothing">Clothing</option>
+              <option value="Food & Beverage">Food & Beverage</option>
+              <option value="Home & Garden">Home & Garden</option>
+              <option value="Sports">Sports</option>
+              <option value="Books">Books</option>
+              <option value="Software">Software</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="saleQuantity">Quantity</label>
+            <input type="number" id="saleQuantity" min="1" value="1" required>
+          </div>
+          <div class="form-group">
+            <label for="saleUnitPrice">Unit Price ($)</label>
+            <input type="number" id="saleUnitPrice" min="0" step="0.01" placeholder="0.00" required>
+          </div>
+          <div class="form-group">
+            <label for="saleStatus">Status</label>
+            <select id="saleStatus" required>
+              <option value="completed">Completed</option>
+              <option value="pending">Pending</option>
+              <option value="refunded">Refunded</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Total</label>
+            <div class="computed-total" id="computedTotal">$0.00</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" id="btnCancelModal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveSale">Save Sale</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title">Confirm Delete</h2>
+        <button class="modal-close" id="btnCloseDelete">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete this transaction? This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btnCancelDelete">Cancel</button>
+        <button class="btn btn-danger" id="btnConfirmDelete">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+
